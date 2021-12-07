@@ -1,5 +1,5 @@
 {
-  "name": "twap-calcs",
+  "name": "uni-twap-v2-demo",
   "version": "0.1.0",
   "description": "Testing UniswapV2 TWAP oracle calculations.",
   "main": "index.js",
