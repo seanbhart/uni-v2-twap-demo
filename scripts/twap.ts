@@ -1,7 +1,7 @@
 import * as OracleSdk from "@keydonix/uniswap-oracle-sdk";
 import { ethers } from "ethers";
-// const JSON_RPC = `${process.env.NETWORK_FORK}`;
-const JSON_RPC = `http://127.0.0.1:8545/`;
+const JSON_RPC = `${process.env.NETWORK_FORK}`;
+const JSON_RPC_LOCAL = `${process.env.NETWORK_LOCAL}`;
 const provider = new ethers.providers.JsonRpcProvider(JSON_RPC);
 
 export type BlockHash = {
@@ -11,7 +11,7 @@ export type BlockHash = {
 export const getStorageAt = async (
   address: bigint,
   position: bigint,
-  blockNumber: bigint | "latest"
+  blockNumber: bigint | "latest",
 ): Promise<bigint> => {
   //   const check = await provider.getCode(ethers.utils.hexValue(address));
   //   console.log("check: ", check);
@@ -24,39 +24,33 @@ export const getStorageAt = async (
     provider
       // .getStorageAt(ethers.utils.hexValue(address), position, 12596295)
       .getStorageAt(ethers.utils.hexValue(address), position, block.number)
-      .then((value) => BigInt(value))
+      .then(value => BigInt(value))
   );
 };
 
 export const getProof = async (
   address: bigint,
   positions: readonly bigint[],
-  block: bigint
+  block: bigint,
 ): Promise<OracleSdk.ProofResult> => {
   const proof = await provider.send("eth_getProof", [
     ethers.utils.hexValue(address),
-    positions.map((value) => ethers.utils.hexValue(value)),
+    positions.map(value => ethers.utils.hexValue(value)),
     ethers.utils.hexValue(block),
   ]);
   return {
-    accountProof: proof.accountProof.map((result: string) =>
-      ethers.utils.arrayify(result)
-    ),
-    storageProof: proof.storageProof.map(
-      (result: { key: any; value: any; proof: [any] }) => {
-        return {
-          key: BigInt(result.key),
-          value: BigInt(result.value),
-          proof: result.proof.map((result) => ethers.utils.arrayify(result)),
-        };
-      }
-    ),
+    accountProof: proof.accountProof.map((result: string) => ethers.utils.arrayify(result)),
+    storageProof: proof.storageProof.map((result: { key: any; value: any; proof: [any] }) => {
+      return {
+        key: BigInt(result.key),
+        value: BigInt(result.value),
+        proof: result.proof.map(result => ethers.utils.arrayify(result)),
+      };
+    }),
   };
 };
 
-export const getBlockByNumber = async (
-  blockNumber: bigint | "latest"
-): Promise<OracleSdk.Block | null> => {
+export const getBlockByNumber = async (blockNumber: bigint | "latest"): Promise<OracleSdk.Block | null> => {
   const block = await provider.send("eth_getBlockByNumber", [
     blockNumber !== "latest" ? ethers.utils.hexValue(blockNumber) : blockNumber,
     false,
@@ -80,9 +74,7 @@ export const getBlockByNumber = async (
   };
 };
 
-export const getBlockHashByNumber = async (
-  blockNumber: bigint | "latest"
-): Promise<BlockHash | null> => {
+export const getBlockHashByNumber = async (blockNumber: bigint | "latest"): Promise<BlockHash | null> => {
   const block = await provider.send("eth_getBlockByNumber", [
     blockNumber !== "latest" ? ethers.utils.hexValue(blockNumber) : blockNumber,
     false,

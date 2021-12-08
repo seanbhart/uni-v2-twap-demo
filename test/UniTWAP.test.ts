@@ -1,10 +1,4 @@
-import {
-  ContractFactory,
-  Contract,
-  ContractReceipt,
-  ContractTransaction,
-  Event,
-} from "@ethersproject/contracts";
+import { ContractFactory, Contract, ContractReceipt, ContractTransaction, Event } from "@ethersproject/contracts";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { Address } from "cluster";
@@ -13,17 +7,11 @@ import { ethers } from "hardhat";
 // import * as OracleSdk from "@keydonix/uniswap-oracle-sdk";
 import * as OracleSdk from "/Users/seanhart/Documents/Ethereum/uniswap-oracle/sdk/source";
 import * as OracleSdkAdapter from "@keydonix/uniswap-oracle-ethers-sdk-adapter";
-import {
-  getStorageAt,
-  getProof,
-  getBlockByNumber,
-  getBlockHashByNumber,
-  BlockHash,
-} from "../scripts/twap";
+import { getStorageAt, getProof, getBlockByNumber, getBlockHashByNumber, BlockHash } from "../scripts/twap";
 import IUniswapV2Pair from "../artifacts/@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol/IUniswapV2Pair.json";
 import TESTERC20 from "../artifacts/contracts/TESTERC20.sol/TESTERC20.json";
 
-const JSON_RPC = `http://127.0.0.1:8545/`;
+const JSON_RPC = `${process.env.NETWORK_LOCAL}`;
 // const JSON_RPC = `${process.env.NETWORK_FORK}`;
 const provider = new ethers.providers.JsonRpcProvider(JSON_RPC);
 
@@ -77,46 +65,25 @@ describe("Uni setup", function () {
     tokenFactory = await tokenFactoryFactory.deploy();
     console.log("tokenFactory Address: ", tokenFactory.address);
 
-    var transaction = await tokenFactory.createToken(
-      "CASH Token",
-      "CASH",
-      50000000
-    );
+    var transaction = await tokenFactory.createToken("CASH Token", "CASH", 50000000);
     await transaction.wait();
     token1Address = await tokenFactory.getToken("CASH");
     token1 = new ethers.Contract(token1Address, TESTERC20.abi, owner);
 
-    transaction = await tokenFactory.createToken(
-      "LMAO Token",
-      "LMAO",
-      50000000
-    );
+    transaction = await tokenFactory.createToken("LMAO Token", "LMAO", 50000000);
     await transaction.wait();
     token2Address = await tokenFactory.getToken("LMAO");
     token2 = new ethers.Contract(token2Address, TESTERC20.abi, owner);
 
-    transaction = await tokenFactory.createToken(
-      "MEME Token",
-      "MEME",
-      50000000
-    );
+    transaction = await tokenFactory.createToken("MEME Token", "MEME", 50000000);
     await transaction.wait();
     token3Address = await tokenFactory.getToken("MEME");
     token3 = new ethers.Contract(token3Address, TESTERC20.abi, owner);
 
-    console.log(
-      "Deployed tokens: ",
-      token1.address,
-      token2.address,
-      token3.address
-    );
+    console.log("Deployed tokens: ", token1.address, token2.address, token3.address);
 
     // // Deploy WETH
-    transaction = await tokenFactory.createToken(
-      "Wrapped ETH",
-      "WETH",
-      70000000
-    );
+    transaction = await tokenFactory.createToken("Wrapped ETH", "WETH", 70000000);
     await transaction.wait();
     uniWethAddress = await tokenFactory.getToken("WETH");
     uniWeth = new ethers.Contract(uniWethAddress, TESTERC20.abi, owner);
@@ -133,50 +100,29 @@ describe("Uni setup", function () {
 
     // Create the token pairs
     await uniFactory.createPair(token1.address, uniWeth.address);
-    let uniPair1Address = await uniFactory.getPair(
-      token1.address,
-      uniWeth.address
-    );
+    let uniPair1Address = await uniFactory.getPair(token1.address, uniWeth.address);
     console.log("uniFactory uniPair1Address: ", uniPair1Address);
     uniPair1 = new ethers.Contract(uniPair1Address, IUniswapV2Pair.abi, owner);
 
     await uniFactory.createPair(token2.address, uniWeth.address);
-    let uniPair2Address = await uniFactory.getPair(
-      token2.address,
-      uniWeth.address
-    );
+    let uniPair2Address = await uniFactory.getPair(token2.address, uniWeth.address);
     console.log("uniFactory uniPair2Address: ", uniPair2Address);
     uniPair2 = new ethers.Contract(uniPair2Address, IUniswapV2Pair.abi, owner);
 
     await uniFactory.createPair(token3.address, uniWeth.address);
-    let uniPair3Address = await uniFactory.getPair(
-      token3.address,
-      uniWeth.address
-    );
+    let uniPair3Address = await uniFactory.getPair(token3.address, uniWeth.address);
     console.log("uniFactory uniPair3Address: ", uniPair3Address);
     uniPair3 = new ethers.Contract(uniPair3Address, IUniswapV2Pair.abi, owner);
 
     // Deploy the Uniswap Router
-    console.log(
-      "Deploying Uni Router: ",
-      uniFactory.address,
-      " ",
-      uniWeth.address
-    );
+    console.log("Deploying Uni Router: ", uniFactory.address, " ", uniWeth.address);
     uniRouterFactory = await ethers.getContractFactory("UniswapV2Router02");
-    uniRouter = await uniRouterFactory.deploy(
-      uniFactory.address,
-      uniWeth.address
-    );
+    uniRouter = await uniRouterFactory.deploy(uniFactory.address, uniWeth.address);
     console.log("Deployed Uni Router");
     console.log(await uniRouter.factory());
 
     twapFactory = await ethers.getContractFactory("TWAP");
-    twap = await twapFactory.deploy(
-      uniRouter.address,
-      uniFactory.address,
-      uniWeth.address
-    );
+    twap = await twapFactory.deploy(uniRouter.address, uniFactory.address, uniWeth.address);
     console.log("twap Address: ", twap.address);
   });
 
@@ -197,11 +143,7 @@ describe("Uni setup", function () {
       accum1_0_before = await uniPair1.price0CumulativeLast();
       console.log("accum1_0_before: ", accum1_0_before.toString());
       accum1_reserves = await uniPair1.getReserves();
-      console.log(
-        "accum1_0_reserves: ",
-        accum1_reserves.reserve0.toString(),
-        accum1_reserves.reserve1.toString()
-      );
+      console.log("accum1_0_reserves: ", accum1_reserves.reserve0.toString(), accum1_reserves.reserve1.toString());
       let block = await getBlockByNumber("latest");
       if (block) {
         console.log("block number, timestamp: ", block.number, block.timestamp);
@@ -220,7 +162,7 @@ describe("Uni setup", function () {
           0,
           0,
           owner.address,
-          Math.round(Date.now() / 1000) + 10000
+          Math.round(Date.now() / 1000) + 10000,
         );
 
         await uniRouter.addLiquidity(
@@ -231,7 +173,7 @@ describe("Uni setup", function () {
           0,
           0,
           owner.address,
-          Math.round(Date.now() / 1000) + 10000
+          Math.round(Date.now() / 1000) + 10000,
         );
 
         await uniRouter.addLiquidity(
@@ -242,7 +184,7 @@ describe("Uni setup", function () {
           0,
           0,
           owner.address,
-          Math.round(Date.now() / 1000) + 10000
+          Math.round(Date.now() / 1000) + 10000,
         );
       }
 
@@ -280,11 +222,7 @@ describe("Uni setup", function () {
       let block = await getBlockByNumber("latest");
       console.log("accum12_0_after: ", accum1_0_after.toString());
       accum1_reserves = await uniPair1.getReserves();
-      console.log(
-        "accum1_0_reserves: ",
-        accum1_reserves.reserve0.toString(),
-        accum1_reserves.reserve1.toString()
-      );
+      console.log("accum1_0_reserves: ", accum1_reserves.reserve0.toString(), accum1_reserves.reserve1.toString());
       if (block) {
         console.log("block number, timestamp: ", block.number, block.timestamp);
       }
@@ -322,11 +260,7 @@ describe("Uni setup", function () {
       let block = await getBlockByNumber("latest");
       console.log("accum1_0_before: ", accum1_0_before.toString());
       accum1_reserves = await uniPair1.getReserves();
-      console.log(
-        "accum1_0_reserves: ",
-        accum1_reserves.reserve0.toString(),
-        accum1_reserves.reserve1.toString()
-      );
+      console.log("accum1_0_reserves: ", accum1_reserves.reserve0.toString(), accum1_reserves.reserve1.toString());
       if (block) {
         console.log("block number, timestamp: ", block.number, block.timestamp);
       }
@@ -338,7 +272,7 @@ describe("Uni setup", function () {
           0,
           [token1.address, uniWeth.address],
           owner.address,
-          Math.round(Date.now() / 1000) + 10000
+          Math.round(Date.now() / 1000) + 10000,
         );
       }
 
@@ -356,11 +290,7 @@ describe("Uni setup", function () {
       let block = await getBlockByNumber("latest");
       console.log("accum12_0_after: ", accum1_0_after.toString());
       accum1_reserves = await uniPair1.getReserves();
-      console.log(
-        "accum1_0_reserves: ",
-        accum1_reserves.reserve0.toString(),
-        accum1_reserves.reserve1.toString()
-      );
+      console.log("accum1_0_reserves: ", accum1_reserves.reserve0.toString(), accum1_reserves.reserve1.toString());
       if (block) {
         console.log("block number, timestamp: ", block.number, block.timestamp);
       }
@@ -375,7 +305,7 @@ describe("Uni setup", function () {
           0,
           [token1.address, uniWeth.address, token3.address],
           owner.address,
-          Math.round(Date.now() / 1000) + 10000
+          Math.round(Date.now() / 1000) + 10000,
         );
       }
 
@@ -394,11 +324,7 @@ describe("Uni setup", function () {
       let block = await getBlockByNumber("latest");
       console.log("accum1_0_before: ", accum1_0_before.toString());
       accum1_reserves = await uniPair1.getReserves();
-      console.log(
-        "accum1_0_reserves: ",
-        accum1_reserves.reserve0.toString(),
-        accum1_reserves.reserve1.toString()
-      );
+      console.log("accum1_0_reserves: ", accum1_reserves.reserve0.toString(), accum1_reserves.reserve1.toString());
       if (block) {
         console.log("block number, timestamp: ", block.number, block.timestamp);
       }
@@ -414,7 +340,7 @@ describe("Uni setup", function () {
           0,
           0,
           owner.address,
-          Math.round(Date.now() / 1000) + 10000
+          Math.round(Date.now() / 1000) + 10000,
         );
       }
 
@@ -431,11 +357,7 @@ describe("Uni setup", function () {
       let block = await getBlockByNumber("latest");
       console.log("accum1_0_after: ", accum1_0_after.toString());
       accum1_reserves = await uniPair1.getReserves();
-      console.log(
-        "accum1_0_reserves: ",
-        accum1_reserves.reserve0.toString(),
-        accum1_reserves.reserve1.toString()
-      );
+      console.log("accum1_0_reserves: ", accum1_reserves.reserve0.toString(), accum1_reserves.reserve1.toString());
       if (block) {
         console.log("block number, timestamp: ", block.number, block.timestamp);
       }
@@ -453,7 +375,7 @@ describe("Uni setup", function () {
           0,
           0,
           owner.address,
-          Math.round(Date.now() / 1000) + 10000
+          Math.round(Date.now() / 1000) + 10000,
         );
       }
 
@@ -490,58 +412,31 @@ describe("Uni setup", function () {
   describe("Pair Update", function () {
     it("Should have values in the accumulator", async function () {
       console.log("current time: ", Date.now());
-      let block = await provider.send("eth_getBlockByNumber", [
-        "latest",
-        false,
-      ]);
+      let block = await provider.send("eth_getBlockByNumber", ["latest", false]);
 
       console.log("block number: ", BigNumber.from(block.number).toString());
       console.log("pair1Contract: ", uniPair1.address);
       console.log("pair1Contract-token0: ", await uniPair1.token0());
       console.log("pair1Contract-token1: ", await uniPair1.token1());
       await uniPair1.sync();
-      console.log(
-        "pair1price0CumulativeLast: ",
-        BigNumber.from(await uniPair1.price0CumulativeLast()).toString()
-      );
-      console.log(
-        "pair1price1CumulativeLast: ",
-        BigNumber.from(await uniPair1.price1CumulativeLast()).toString()
-      );
+      console.log("pair1price0CumulativeLast: ", BigNumber.from(await uniPair1.price0CumulativeLast()).toString());
+      console.log("pair1price1CumulativeLast: ", BigNumber.from(await uniPair1.price1CumulativeLast()).toString());
       console.log("kLast: ", BigNumber.from(await uniPair1.kLast()).toString());
       const pair1Reserves = await uniPair1.getReserves();
-      console.log(
-        "reserve0: ",
-        BigNumber.from(await pair1Reserves.reserve0).toString()
-      );
-      console.log(
-        "reserve1: ",
-        BigNumber.from(await pair1Reserves.reserve1).toString()
-      );
+      console.log("reserve0: ", BigNumber.from(await pair1Reserves.reserve0).toString());
+      console.log("reserve1: ", BigNumber.from(await pair1Reserves.reserve1).toString());
       console.log("blockTimestampLast: ", pair1Reserves.blockTimestampLast);
 
       console.log("pair2Contract: ", uniPair2.address);
       console.log("pair2Contract-token0: ", await uniPair2.token0());
       console.log("pair2Contract-token1: ", await uniPair2.token1());
       await uniPair2.sync();
-      console.log(
-        "pair2token0oracle: ",
-        BigNumber.from(await uniPair2.price0CumulativeLast()).toString()
-      );
-      console.log(
-        "pair2token1oracle: ",
-        BigNumber.from(await uniPair2.price1CumulativeLast()).toString()
-      );
+      console.log("pair2token0oracle: ", BigNumber.from(await uniPair2.price0CumulativeLast()).toString());
+      console.log("pair2token1oracle: ", BigNumber.from(await uniPair2.price1CumulativeLast()).toString());
       console.log("kLast: ", BigNumber.from(await uniPair2.kLast()).toString());
       const pair2Reserves = await uniPair2.getReserves();
-      console.log(
-        "reserve0: ",
-        BigNumber.from(await pair2Reserves.reserve0).toString()
-      );
-      console.log(
-        "reserve1: ",
-        BigNumber.from(await pair2Reserves.reserve1).toString()
-      );
+      console.log("reserve0: ", BigNumber.from(await pair2Reserves.reserve0).toString());
+      console.log("reserve1: ", BigNumber.from(await pair2Reserves.reserve1).toString());
       console.log("blockTimestampLast: ", pair2Reserves.blockTimestampLast);
 
       block = await provider.send("eth_getBlockByNumber", ["latest", false]);
@@ -591,13 +486,13 @@ describe("Uni setup", function () {
         pairAddress,
         denomToken,
         latestBlock.number,
-        latestBlock.timestamp
+        latestBlock.timestamp,
       );
       const historicAccumulator = await getAccumulatorValue(
         pairAddress,
         denomToken,
         historicBlock.number,
-        historicBlock.timestamp
+        historicBlock.timestamp,
       );
       const accumulatorDelta = latestAccumulator - historicAccumulator;
       console.log("accumulatorDelta:", accumulatorDelta);
@@ -606,12 +501,7 @@ describe("Uni setup", function () {
       console.log("TWAP OUTPUT", accumulatorDelta / timeDelta);
 
       let amountIn: number = 1000000;
-      let amountOut = await twap.computeAmountOut(
-        historicAccumulator,
-        latestAccumulator,
-        timeDelta,
-        amountIn
-      );
+      let amountOut = await twap.computeAmountOut(historicAccumulator, latestAccumulator, timeDelta, amountIn);
       let price: number = amountOut.toNumber() / amountIn;
       console.log("amountOut:", amountOut.toNumber());
       console.log("price:", price);
@@ -661,7 +551,7 @@ async function getAccumulatorValue(
   pairAddress: bigint,
   denominationToken: bigint,
   blockNumber: bigint,
-  timestamp: bigint
+  timestamp: bigint,
 ) {
   const factory = await getStorageAt(pairAddress, 6n, blockNumber);
   const token0 = await getStorageAt(pairAddress, 7n, blockNumber);
@@ -682,47 +572,33 @@ async function getAccumulatorValue(
   console.log("reserve1:", reserve1);
   console.log("blockTimestampLast:", blockTimestampLast);
   if (token0 !== denominationToken && token1 !== denominationToken)
-    throw new Error(
-      `Denomination token ${denominationToken} is not one of the tokens for exchange ${pairAddress}`
-    );
-  if (reserve0 === 0n)
-    throw new Error(
-      `Exchange ${pairAddress} does not have any reserves for token0.`
-    );
-  if (reserve1 === 0n)
-    throw new Error(
-      `Exchange ${pairAddress} does not have any reserves for token1.`
-    );
+    throw new Error(`Denomination token ${denominationToken} is not one of the tokens for exchange ${pairAddress}`);
+  if (reserve0 === 0n) throw new Error(`Exchange ${pairAddress} does not have any reserves for token0.`);
+  if (reserve1 === 0n) throw new Error(`Exchange ${pairAddress} does not have any reserves for token1.`);
   if (blockTimestampLast === 0n)
-    throw new Error(
-      `Exchange ${pairAddress} has not had its first accumulator update (or it is year 2106).`
-    );
+    throw new Error(`Exchange ${pairAddress} has not had its first accumulator update (or it is year 2106).`);
   if (accumulator0 === 0n)
     throw new Error(
-      `Exchange ${pairAddress} has not had its first accumulator update (or it is 136 years since launch).`
+      `Exchange ${pairAddress} has not had its first accumulator update (or it is 136 years since launch).`,
     );
   if (accumulator1 === 0n)
     throw new Error(
-      `Exchange ${pairAddress} has not had its first accumulator update (or it is 136 years since launch).`
+      `Exchange ${pairAddress} has not had its first accumulator update (or it is 136 years since launch).`,
     );
   const numeratorReserve = token0 === denominationToken ? reserve0 : reserve1;
   const denominatorReserve = token0 === denominationToken ? reserve1 : reserve0;
-  const accumulator =
-    token0 === denominationToken ? accumulator1 : accumulator0;
+  const accumulator = token0 === denominationToken ? accumulator1 : accumulator0;
   const timeElapsedSinceLastAccumulatorUpdate = timestamp - blockTimestampLast;
   const priceNow = (numeratorReserve * 2n ** 112n) / denominatorReserve;
   console.log("accumulator", accumulator);
-  console.log(
-    "timeElapsedSinceLastAccumulatorUpdate",
-    timeElapsedSinceLastAccumulatorUpdate
-  );
+  console.log("timeElapsedSinceLastAccumulatorUpdate", timeElapsedSinceLastAccumulatorUpdate);
   console.log("priceNow", priceNow);
   return accumulator + timeElapsedSinceLastAccumulatorUpdate * priceNow;
 }
 
 async function getAccumulators(
   pairAddress: bigint,
-  blockNumber: bigint
+  blockNumber: bigint,
 ): Promise<[bigint, bigint, bigint, bigint, bigint]> {
   console.log("blockNumber: ", blockNumber);
   const factory = await getStorageAt(pairAddress, 6n, blockNumber);

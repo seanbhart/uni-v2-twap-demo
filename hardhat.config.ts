@@ -101,7 +101,7 @@ const config: HardhatUserConfig = {
       },
     },
     local: {
-      url: `http://127.0.0.1:8545/`,
+      url: `${process.env.NETWORK_LOCAL}`,
       // chainId: 31337,
       accounts: [`0x${process.env.ACCOUNT_KEY_PRIV_LOCAL}`],
       forking: {
@@ -109,7 +109,7 @@ const config: HardhatUserConfig = {
       },
     },
     kovan: {
-      url: `${process.env.NETWORK}`,
+      url: `${process.env.NETWORK_KOVAN}`,
       accounts: [`0x${process.env.ACCOUNT_KEY_PRIV_KOVAN}`],
       // gas: 12000000,
       // blockGasLimit: 0x1fffffffffffff,
@@ -117,7 +117,7 @@ const config: HardhatUserConfig = {
       // timeout: 1800000,
     },
     rinkeby: {
-      url: `${process.env.NETWORK}`,
+      url: `${process.env.NETWORK_RINKEBY}`,
       accounts: [`0x${process.env.ACCOUNT_KEY_PRIV_RINKEBY}`],
       // gas: 12000000,
       // blockGasLimit: 0x1fffffffffffff,
