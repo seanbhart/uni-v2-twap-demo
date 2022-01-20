@@ -18,8 +18,8 @@ contract TWAP is SushiOracle {
     address public wETH;
     address public pairsFactoryAddress;
     address public routerAddress;
-    // uint8 public minBlocksBack = uint8(0);
-    // uint8 public maxBlocksBack = uint8(256);
+    uint8 public minBlocksBack = uint8(0);
+    uint8 public maxBlocksBack = uint8(256);
 
     IUniswapV2Router02 internal router;
 
